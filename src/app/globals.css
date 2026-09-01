@@ -1,0 +1,161 @@
+@import "tailwindcss";
+
+@theme {
+  --font-sans:
+    var(--font-jakarta), ui-sans-serif, system-ui, -apple-system, "Segoe UI",
+    sans-serif;
+  --font-display:
+    var(--font-bricolage), var(--font-jakarta), ui-sans-serif, system-ui,
+    sans-serif;
+
+  /* Brand: deep teal-cyan — Trust + Search + Connection + AI */
+  --color-brand-50: #f0fafa;
+  --color-brand-100: #d7f2f3;
+  --color-brand-200: #aee4e6;
+  --color-brand-300: #7bd0d4;
+  --color-brand-400: #44b4bb;
+  --color-brand-500: #2398a1;
+  --color-brand-600: #1a7c87;
+  --color-brand-700: #19646e;
+  --color-brand-800: #1a525a;
+  --color-brand-900: #19444c;
+  --color-brand-950: #0a2b32;
+
+  /* Ink: deep navy for dark surfaces */
+  --color-ink-800: #1d2739;
+  --color-ink-900: #131c2d;
+  --color-ink-950: #0a1120;
+
+  --shadow-soft:
+    0 1px 2px rgb(10 17 32 / 0.04), 0 4px 16px -4px rgb(10 17 32 / 0.08);
+  --shadow-lift:
+    0 2px 4px rgb(10 17 32 / 0.05), 0 12px 32px -8px rgb(10 17 32 / 0.14);
+
+  --animate-fade-up: fade-up 0.5s cubic-bezier(0.16, 1, 0.3, 1) both;
+  --animate-fade-in: fade-in 0.4s ease both;
+  --animate-marquee: marquee 36s linear infinite;
+
+  @keyframes fade-up {
+    from {
+      opacity: 0;
+      transform: translateY(12px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+  @keyframes fade-in {
+    from {
+      opacity: 0;
+    }
+    to {
+      opacity: 1;
+    }
+  }
+  @keyframes marquee {
+    from {
+      transform: translateX(0);
+    }
+    to {
+      transform: translateX(-50%);
+    }
+  }
+}
+
+body {
+  background: #f6f8fa;
+  color: #0f172a;
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+::selection {
+  background: var(--color-brand-200);
+  color: var(--color-brand-950);
+}
+
+/* Landing hero grid pattern on dark ink */
+.hero-grid {
+  background-image:
+    linear-gradient(to right, rgb(255 255 255 / 0.045) 1px, transparent 1px),
+    linear-gradient(to bottom, rgb(255 255 255 / 0.045) 1px, transparent 1px);
+  background-size: 44px 44px;
+  mask-image: radial-gradient(
+    ellipse 90% 70% at 50% 35%,
+    black 40%,
+    transparent 100%
+  );
+}
+
+/* Film-grain texture agar permukaan gelap tidak terasa "flat digital" */
+.grain::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  opacity: 0.055;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='160' height='160' filter='url(%23n)'/%3E%3C/svg%3E");
+}
+
+/* Coretan tangan (scribble) di bawah kata kunci headline */
+.scribble {
+  position: relative;
+  white-space: nowrap;
+}
+.scribble > svg {
+  position: absolute;
+  left: -2%;
+  bottom: -0.18em;
+  width: 104%;
+  height: 0.32em;
+  overflow: visible;
+}
+.scribble > svg path {
+  fill: none;
+  stroke: #fbbf24;
+  stroke-width: 7;
+  stroke-linecap: round;
+  stroke-dasharray: 1000;
+  stroke-dashoffset: 1000;
+  animation: scribble-draw 0.9s 0.45s cubic-bezier(0.65, 0, 0.35, 1) forwards;
+}
+@keyframes scribble-draw {
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+
+/* Garis putus-putus penghubung antar langkah (How it works) */
+.step-connector {
+  background-image: linear-gradient(
+    to right,
+    rgb(35 152 161 / 0.45) 55%,
+    transparent 0%
+  );
+  background-size: 14px 2px;
+  background-repeat: repeat-x;
+  background-position: left center;
+}
+
+/* Marquee berhenti saat hover */
+.marquee-track:hover {
+  animation-play-state: paused;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .scribble > svg path {
+    animation: none;
+    stroke-dashoffset: 0;
+  }
+  .marquee-track {
+    animation: none;
+  }
+}
+
+/* Thin scrollbar for chat panes */
+.scrollbar-thin {
+  scrollbar-width: thin;
+  scrollbar-color: rgb(148 163 184 / 0.5) transparent;
+}
