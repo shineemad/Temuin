@@ -3,6 +3,7 @@
 import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 import { after } from "next/server";
+import sharp from "sharp";
 import { supabaseAdmin } from "@/lib/supabase/admin";
 import { requireUser } from "@/lib/auth";
 import {
@@ -29,6 +30,33 @@ import {
 import { rateLimit } from "@/lib/rate-limit";
 import type { ActionResult, ReportType } from "@/lib/types";
 
+// Header biner asli tiap format — dipakai menggantikan `file.type`, yang
+// dikirim browser dan gampang dipalsukan lewat request manual.
+const IMAGE_SIGNATURES = [
+  { mime: "image/jpeg", ext: "jpg", magic: [0xff, 0xd8, 0xff] },
+  {
+    mime: "image/png",
+    ext: "png",
+    magic: [0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a],
+  },
+  { mime: "image/webp", ext: "webp", magic: [0x52, 0x49, 0x46, 0x46] },
+] as const;
+
+function detectImage(buffer: Buffer) {
+  for (const sig of IMAGE_SIGNATURES) {
+    if (!sig.magic.every((byte, i) => buffer[i] === byte)) continue;
+    // RIFF juga dipakai WAV/AVI, jadi WebP perlu cek penanda kedua.
+    if (
+      sig.mime === "image/webp" &&
+      buffer.subarray(8, 12).toString("ascii") !== "WEBP"
+    ) {
+      continue;
+    }
+    return sig;
+  }
+  return null;
+}
+
 async function uploadImage(
   file: File,
   type: ReportType,
@@ -40,17 +68,35 @@ async function uploadImage(
   if (!ALLOWED_IMAGE_TYPES.includes(file.type)) {
     return { error: "Format foto harus JPG, PNG, atau WebP." };
   }
-  const ext =
-    file.type === "image/png"
-      ? "png"
-      : file.type === "image/webp"
-        ? "webp"
-        : "jpg";
-  const path = `${type.toLowerCase()}/${reportId}/${crypto.randomUUID()}.${ext}`;
-  const buffer = Buffer.from(await file.arrayBuffer());
+
+  const raw = Buffer.from(await file.arrayBuffer());
+  const detected = detectImage(raw);
+  if (!detected) {
+    return { error: "File ini bukan gambar JPG, PNG, atau WebP yang valid." };
+  }
+
+  // Encode ulang agar metadata (termasuk koordinat GPS di EXIF) hilang dan
+  // isi file dipastikan benar-benar bisa didecode sebagai gambar.
+  let clean: Buffer;
+  try {
+    const pipeline = sharp(raw, { failOn: "error" })
+      .rotate() // terapkan orientasi EXIF sebelum tag-nya ikut terbuang
+      .resize({ width: 2000, height: 2000, fit: "inside", withoutEnlargement: true });
+    clean = await (detected.mime === "image/png"
+      ? pipeline.png()
+      : detected.mime === "image/webp"
+        ? pipeline.webp()
+        : pipeline.jpeg({ quality: 82 })
+    ).toBuffer();
+  } catch (err) {
+    console.error("[upload] gambar gagal diproses:", err);
+    return { error: "Foto tidak bisa diproses. Coba unggah foto lain." };
+  }
+
+  const path = `${type.toLowerCase()}/${reportId}/${crypto.randomUUID()}.${detected.ext}`;
   const { error } = await supabaseAdmin()
     .storage.from(STORAGE_BUCKET)
-    .upload(path, buffer, { contentType: file.type, upsert: false });
+    .upload(path, clean, { contentType: detected.mime, upsert: false });
   if (error) {
     console.error("[upload] gagal:", error);
     return { error: "Upload foto gagal. Coba lagi atau kirim tanpa foto." };
