@@ -22,16 +22,16 @@ Perubahan besar dibanding versi sekarang:
 
 ## Keputusan yang mengunci desain
 
-| Topik | Keputusan |
-|---|---|
-| Target | Komunitas berbatas: institusi **dan** kota (opsi B+C) |
-| Model serah terima | **Hybrid**; MVP mulai dari jalur "meja fisik" untuk barang berharga |
-| Peran operator | **Satu pengelola** untuk MVP (pakai ulang role `admin`) |
-| Arsitektur akses | **Dua permukaan**: situs publik + area terautentikasi |
-| Peran AI | **Asisten yang ditonjolkan** — pintar & transparan, operator memutuskan |
-| Pahlawan AI | **Co-pilot verifikasi operator** |
-| Pendukung AI | **Pencocokan yang bisa dijelaskan** |
-| Dipangkas dari MVP | Chat antar warga, analisis gambar sebagai sinyal matching |
+| Topik              | Keputusan                                                               |
+| ------------------ | ----------------------------------------------------------------------- |
+| Target             | Komunitas berbatas: institusi **dan** kota (opsi B+C)                   |
+| Model serah terima | **Hybrid**; MVP mulai dari jalur "meja fisik" untuk barang berharga     |
+| Peran operator     | **Satu pengelola** untuk MVP (pakai ulang role `admin`)                 |
+| Arsitektur akses   | **Dua permukaan**: situs publik + area terautentikasi                   |
+| Peran AI           | **Asisten yang ditonjolkan** — pintar & transparan, operator memutuskan |
+| Pahlawan AI        | **Co-pilot verifikasi operator**                                        |
+| Pendukung AI       | **Pencocokan yang bisa dijelaskan**                                     |
+| Dipangkas dari MVP | Chat antar warga, analisis gambar sebagai sinyal matching               |
 
 ## Prinsip
 
@@ -49,25 +49,25 @@ Tiga zona.
 
 **Zona publik** (tanpa login, tanpa app-shell):
 
-| Route | Isi | Asal |
-|---|---|---|
-| `/` | Landing + feed barang terbaru | rombak `src/app/page.tsx` |
-| `/cari` | Browse + filter (kategori, pos, status) | baru |
-| `/barang/[id]` | Detail barang publik, tanpa data sensitif | baru (turunan `reports/[id]`) |
-| `/lapor/hilang`, `/lapor/temuan` | Form lapor | pindah dari `report/*` |
+| Route                            | Isi                                       | Asal                          |
+| -------------------------------- | ----------------------------------------- | ----------------------------- |
+| `/`                              | Landing + feed barang terbaru             | rombak `src/app/page.tsx`     |
+| `/cari`                          | Browse + filter (kategori, pos, status)   | baru                          |
+| `/barang/[id]`                   | Detail barang publik, tanpa data sensitif | baru (turunan `reports/[id]`) |
+| `/lapor/hilang`, `/lapor/temuan` | Form lapor                                | pindah dari `report/*`        |
 
 **Zona login** (app-shell, tanpa dashboard):
 
-| Route | Isi | Asal |
-|---|---|---|
-| `/saya` | "Laporan Saya" — daftar sederhana | ganti `dashboard` |
-| `/klaim`, `/klaim/[id]` | Proses klaim (claimant menjawab verifikasi) | `claims/*` |
-| `/notifikasi`, `/profil` | Tetap | tetap |
+| Route                    | Isi                                         | Asal              |
+| ------------------------ | ------------------------------------------- | ----------------- |
+| `/saya`                  | "Laporan Saya" — daftar sederhana           | ganti `dashboard` |
+| `/klaim`, `/klaim/[id]`  | Proses klaim (claimant menjawab verifikasi) | `claims/*`        |
+| `/notifikasi`, `/profil` | Tetap                                       | tetap             |
 
 **Zona pengelola** (khusus operator):
 
-| Route | Isi | Asal |
-|---|---|---|
+| Route  | Isi                                               | Asal                    |
+| ------ | ------------------------------------------------- | ----------------------- |
 | `/pos` | Konsol operator: Terima, Verifikasi, Serah terima | baru (gantikan `admin`) |
 
 Aturan:
@@ -145,11 +145,11 @@ Pergeseran kunci:
 
 **Konsol operator `/pos` — tiga antrean:**
 
-| Tab | Isi | Aksi |
-|---|---|---|
-| **Terima** | Barang `AWAITING` | "Barang diterima" → `IN_CUSTODY` |
+| Tab               | Isi                      | Aksi                                                                                    |
+| ----------------- | ------------------------ | --------------------------------------------------------------------------------------- |
+| **Terima**        | Barang `AWAITING`        | "Barang diterima" → `IN_CUSTODY`                                                        |
 | **Verifikasi** ⭐ | Klaim menunggu keputusan | Panel co-pilot: skor + analisis tiap jawaban vs info rahasia → Approve/Reject + catatan |
-| **Serah terima** | Klaim `APPROVED` | "Sudah diambil pemilik" → `RELEASED`/`RETURNED`/`COMPLETED` |
+| **Serah terima**  | Klaim `APPROVED`         | "Sudah diambil pemilik" → `RELEASED`/`RETURNED`/`COMPLETED`                             |
 
 **Chat dipangkas dari alur pahlawan.** Pos jadi penengah, jadi pemilik tidak perlu
 kontak penemu — identitas kedua pihak tak pernah saling terbuka. Kode chat disimpan
@@ -186,9 +186,10 @@ sesuatu.
 ### Pendukung — Pencocokan yang bisa dijelaskan
 
 `matches.explanation: MatchComponent[]` sudah menyimpan 7 komponen + bobot ternormalisasi
-+ alasan. Yang kurang cuma tampilan: kartu visual "kenapa cocok" (pakai ulang
-`src/components/score-breakdown.tsx`) ditampilkan ke pemilik saat match dan ke operator
-saat verifikasi. Nol perubahan di engine.
+
+- alasan. Yang kurang cuma tampilan: kartu visual "kenapa cocok" (pakai ulang
+  `src/components/score-breakdown.tsx`) ditampilkan ke pemilik saat match dan ke operator
+  saat verifikasi. Nol perubahan di engine.
 
 ### Dipangkas
 
@@ -208,28 +209,28 @@ API key).
 
 **File baru:**
 
-| File | Fungsi |
-|---|---|
-| `src/app/cari/page.tsx` | Browse + filter publik |
-| `src/app/barang/[id]/page.tsx` | Detail publik (tanpa data sensitif) |
-| `src/app/lapor/hilang/page.tsx`, `src/app/lapor/temuan/page.tsx` | Form lapor publik |
-| `src/app/(app)/pos/page.tsx` | Konsol operator (3 antrean) |
-| `src/components/operator-verify.tsx` | Panel co-pilot verifikasi (pahlawan) |
-| `src/components/operator-intake.tsx`, `src/components/operator-handover.tsx` | Terima & serah terima |
-| `src/lib/custody.ts`, `src/lib/pos.ts` | Transisi custody + query pos |
-| `src/lib/actions/operator.ts` | Aksi: terima, putus klaim, konfirmasi serah terima |
+| File                                                                         | Fungsi                                             |
+| ---------------------------------------------------------------------------- | -------------------------------------------------- |
+| `src/app/cari/page.tsx`                                                      | Browse + filter publik                             |
+| `src/app/barang/[id]/page.tsx`                                               | Detail publik (tanpa data sensitif)                |
+| `src/app/lapor/hilang/page.tsx`, `src/app/lapor/temuan/page.tsx`             | Form lapor publik                                  |
+| `src/app/(app)/pos/page.tsx`                                                 | Konsol operator (3 antrean)                        |
+| `src/components/operator-verify.tsx`                                         | Panel co-pilot verifikasi (pahlawan)               |
+| `src/components/operator-intake.tsx`, `src/components/operator-handover.tsx` | Terima & serah terima                              |
+| `src/lib/custody.ts`, `src/lib/pos.ts`                                       | Transisi custody + query pos                       |
+| `src/lib/actions/operator.ts`                                                | Aksi: terima, putus klaim, konfirmasi serah terima |
 
 **File diubah:**
 
-| File | Perubahan |
-|---|---|
-| `src/lib/types.ts` | `Pos`, kolom custody di `FoundReport`, field operator di `Claim` |
-| `src/lib/actions/reports.ts` | Lapor set `holding/pos_id`; login-saat-submit |
-| `src/lib/matching/engine.ts` | Nonaktifkan `image_score` |
-| `src/lib/actions/claims.ts` | Buang approval penemu; claimant hanya menjawab |
-| `src/app/page.tsx` | Landing → feed publik |
-| `src/components/app-shell.tsx` | Nav: buang dashboard, tambah `/saya` + `/pos` |
-| `src/components/score-breakdown.tsx` | Dipakai ulang untuk visual "kenapa cocok" |
+| File                                 | Perubahan                                                        |
+| ------------------------------------ | ---------------------------------------------------------------- |
+| `src/lib/types.ts`                   | `Pos`, kolom custody di `FoundReport`, field operator di `Claim` |
+| `src/lib/actions/reports.ts`         | Lapor set `holding/pos_id`; login-saat-submit                    |
+| `src/lib/matching/engine.ts`         | Nonaktifkan `image_score`                                        |
+| `src/lib/actions/claims.ts`          | Buang approval penemu; claimant hanya menjawab                   |
+| `src/app/page.tsx`                   | Landing → feed publik                                            |
+| `src/components/app-shell.tsx`       | Nav: buang dashboard, tambah `/saya` + `/pos`                    |
+| `src/components/score-breakdown.tsx` | Dipakai ulang untuk visual "kenapa cocok"                        |
 
 **Dihapus / dialihkan:**
 

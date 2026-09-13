@@ -81,12 +81,18 @@ async function uploadImage(
   try {
     const pipeline = sharp(raw, { failOn: "error" })
       .rotate() // terapkan orientasi EXIF sebelum tag-nya ikut terbuang
-      .resize({ width: 2000, height: 2000, fit: "inside", withoutEnlargement: true });
-    clean = await (detected.mime === "image/png"
-      ? pipeline.png()
-      : detected.mime === "image/webp"
-        ? pipeline.webp()
-        : pipeline.jpeg({ quality: 82 })
+      .resize({
+        width: 2000,
+        height: 2000,
+        fit: "inside",
+        withoutEnlargement: true,
+      });
+    clean = await (
+      detected.mime === "image/png"
+        ? pipeline.png()
+        : detected.mime === "image/webp"
+          ? pipeline.webp()
+          : pipeline.jpeg({ quality: 82 })
     ).toBuffer();
   } catch (err) {
     console.error("[upload] gambar gagal diproses:", err);

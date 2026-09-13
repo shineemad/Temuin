@@ -10,7 +10,15 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { supabaseAdmin } from "@/lib/supabase/admin";
 import { processNewReport } from "@/lib/matching/run";
-import { addStatusHistory } from "@/lib/reports";
+import {
+  addStatusHistory,
+  getFoundReport,
+  setReportStatus,
+} from "@/lib/reports";
+import {
+  buildVerificationQuestions,
+  evaluateVerificationAnswers,
+} from "@/lib/verification";
 
 export const maxDuration = 300;
 
@@ -21,6 +29,11 @@ const DEMO_USERS = [
   { email: "sari.demo@temuin.app", name: "Sari Rahayu (Demo)" },
   { email: "andi.demo@temuin.app", name: "Andi Pratama (Demo)" },
 ] as const;
+
+const OPERATOR_USER = {
+  email: "operator.demo@temuin.app",
+  name: "Petugas Pos (Demo)",
+} as const;
 
 function daysAgo(days: number): string {
   const d = new Date();
@@ -84,6 +97,11 @@ async function handleSeed(request: NextRequest) {
     const [ownerId, finderId, extraId] = await Promise.all(
       DEMO_USERS.map((u) => ensureUser(u.email, u.name)),
     );
+    const operatorId = await ensureUser(
+      OPERATOR_USER.email,
+      OPERATOR_USER.name,
+    );
+    await db.from("profiles").update({ role: "admin" }).eq("id", operatorId);
 
     // Bersihkan data demo lama agar seed idempotent (cascade menghapus match/claim terkait).
     await db.from("lost_reports").delete().eq("is_demo", true);
@@ -218,6 +236,105 @@ async function handleSeed(request: NextRequest) {
       found_time: "19:20",
     });
 
+    // ===== Bawa skenario utama ke momen pahlawan: barang di custody pos +
+    // satu klaim yang menunggu keputusan operator (co-pilot). =====
+    const { data: posRow } = await db
+      .from("pos")
+      .select("id, name")
+      .eq("is_active", true)
+      .order("name")
+      .limit(1)
+      .maybeSingle();
+
+    if (posRow) {
+      await db
+        .from("found_reports")
+        .update({
+          holding: "POS",
+          pos_id: posRow.id,
+          custody_status: "IN_CUSTODY",
+          received_by: operatorId,
+          received_at: new Date().toISOString(),
+        })
+        .eq("id", foundWalletId);
+      await addStatusHistory(
+        "FOUND",
+        foundWalletId,
+        "ACTIVE",
+        `Barang diterima operator di ${posRow.name} (demo)`,
+      );
+    }
+
+    let pendingClaimId: string | null = null;
+    const { data: matchRow } = await db
+      .from("matches")
+      .select("id")
+      .eq("lost_report_id", lostWalletId)
+      .eq("found_report_id", foundWalletId)
+      .maybeSingle();
+
+    if (matchRow) {
+      const { data: claimRow } = await db
+        .from("claims")
+        .insert({
+          match_id: matchRow.id,
+          claimant_id: ownerId,
+          status: "SUBMITTED",
+        })
+        .select("id")
+        .single();
+      const foundWallet = await getFoundReport(foundWalletId);
+      if (claimRow && foundWallet) {
+        pendingClaimId = claimRow.id;
+        const questions = buildVerificationQuestions(foundWallet);
+        const answers: Record<string, string> = {
+          brand: "Eiger, dompet lipat kulit",
+          features:
+            "ada gantungan berbentuk huruf A, jahitan di pojok kanan mulai lepas",
+          private_detail:
+            "di dalamnya ada KTP saya, kartu ATM BCA, dan foto keluarga",
+          location: "dekat food court Mall Panakkukang",
+          time: "sekitar 2 hari lalu jam 7 malam",
+        };
+        const evaluation = await evaluateVerificationAnswers(
+          foundWallet,
+          questions,
+          answers,
+        );
+        await db.from("claim_verifications").upsert(
+          {
+            claim_id: claimRow.id,
+            answers,
+            checks: evaluation.checks,
+            score: evaluation.score,
+            evaluated_by: evaluation.evaluatedBy,
+          },
+          { onConflict: "claim_id" },
+        );
+        await db
+          .from("claims")
+          .update({
+            status: "UNDER_VERIFICATION",
+            verification_score: evaluation.score,
+          })
+          .eq("id", claimRow.id);
+        await Promise.all([
+          setReportStatus(
+            "LOST",
+            lostWalletId,
+            "VERIFICATION",
+            "Verifikasi kepemilikan (demo)",
+          ),
+          setReportStatus(
+            "FOUND",
+            foundWalletId,
+            "VERIFICATION",
+            "Verifikasi kepemilikan (demo)",
+          ),
+        ]);
+      }
+    }
+
     // Ambil skor skenario utama untuk ringkasan.
     const { data: mainMatch } = await db
       .from("matches")
@@ -238,6 +355,14 @@ async function handleSeed(request: NextRequest) {
         email: u.email,
         password: DEMO_PASSWORD,
       })),
+      operator_account: {
+        email: OPERATOR_USER.email,
+        password: DEMO_PASSWORD,
+        note: "Login sebagai operator, lalu buka /pos untuk meninjau klaim (co-pilot).",
+      },
+      pending_claim: pendingClaimId
+        ? { id: pendingClaimId, status: "UNDER_VERIFICATION", queue: "/pos" }
+        : { note: "Klaim demo tidak terbentuk — match utama belum ada." },
       created,
       main_scenario: mainMatch
         ? {
