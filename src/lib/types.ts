@@ -38,6 +38,24 @@ export interface Pos {
   created_at: string;
 }
 
+/** Bentuk laporan yang AMAN ditampilkan ke publik — tanpa field sensitif
+ *  (private_verification_info, koordinat presisi, identitas pelapor). */
+export interface PublicReport {
+  id: string;
+  type: ReportType;
+  item_name: string;
+  category: string;
+  color: string | null;
+  brand: string | null;
+  description: string;
+  location_name: string;
+  date: string;
+  has_image: boolean;
+  status: ReportStatus;
+  pos_name: string | null;
+  created_at: string;
+}
+
 export interface Profile {
   id: string;
   full_name: string;

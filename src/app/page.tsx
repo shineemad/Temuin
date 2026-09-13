@@ -26,8 +26,10 @@ import {
   Watch,
 } from "lucide-react";
 import { Logo, LogoMark } from "@/components/logo";
+import { PublicReportCard } from "@/components/public-report-card";
 import { getSessionUser } from "@/lib/auth";
 import { supabaseAdmin } from "@/lib/supabase/admin";
+import { getPublicFeed } from "@/lib/public-reports";
 
 async function getPublicStats() {
   try {
@@ -135,7 +137,11 @@ const PLACES = [
 ];
 
 export default async function LandingPage() {
-  const [user, stats] = await Promise.all([getSessionUser(), getPublicStats()]);
+  const [user, stats, feed] = await Promise.all([
+    getSessionUser(),
+    getPublicStats(),
+    getPublicFeed(8),
+  ]);
   const authedHome = user ? "/dashboard" : null;
 
   return (
@@ -223,7 +229,7 @@ export default async function LandingPage() {
             </p>
             <div className="mt-9 flex flex-col gap-3 sm:flex-row">
               <Link
-                href={user ? "/report/lost" : "/register"}
+                href="/lapor/hilang"
                 className="group inline-flex h-12 items-center justify-center gap-2 rounded-xl bg-brand-500 px-6 text-[15px] font-semibold text-white shadow-lg shadow-brand-500/25 transition hover:bg-brand-400"
               >
                 <PackageSearch className="size-5" />
@@ -231,7 +237,7 @@ export default async function LandingPage() {
                 <ArrowRight className="size-4 transition-transform group-hover:translate-x-0.5" />
               </Link>
               <Link
-                href={user ? "/report/found" : "/register"}
+                href="/lapor/temuan"
                 className="inline-flex h-12 items-center justify-center gap-2 rounded-xl bg-white/10 px-6 text-[15px] font-semibold text-white ring-1 ring-white/20 backdrop-blur transition hover:bg-white/15"
               >
                 <HandHeart className="size-5" />
@@ -364,9 +370,18 @@ export default async function LandingPage() {
         <section className="border-b border-slate-100 bg-white">
           <div className="mx-auto grid max-w-6xl grid-cols-2 divide-x divide-slate-100 px-4 py-10 sm:px-6 lg:grid-cols-4">
             {[
-              { label: "Laporan masuk", value: stats.reports.toLocaleString("id-ID") },
-              { label: "AI matches", value: stats.matches.toLocaleString("id-ID") },
-              { label: "Barang kembali", value: stats.returned.toLocaleString("id-ID") },
+              {
+                label: "Laporan masuk",
+                value: stats.reports.toLocaleString("id-ID"),
+              },
+              {
+                label: "AI matches",
+                value: stats.matches.toLocaleString("id-ID"),
+              },
+              {
+                label: "Barang kembali",
+                value: stats.returned.toLocaleString("id-ID"),
+              },
               {
                 label: "Tingkat keberhasilan",
                 value: stats.rate === null ? "—" : `${stats.rate.toFixed(1)}%`,
@@ -385,8 +400,41 @@ export default async function LandingPage() {
         </section>
       )}
 
+      {/* ============ FEED PUBLIK ============ */}
+      {feed.length > 0 && (
+        <section className="border-b border-slate-100 bg-slate-50/60">
+          <div className="mx-auto max-w-6xl px-4 py-16 sm:px-6">
+            <div className="flex flex-wrap items-end justify-between gap-4">
+              <div>
+                <p className="text-sm font-semibold text-brand-600">
+                  Baru dilaporkan
+                </p>
+                <h2 className="font-display mt-2 text-3xl font-bold tracking-tight text-slate-900 sm:text-4xl">
+                  Barang terbaru di komunitas
+                </h2>
+              </div>
+              <Link
+                href="/cari"
+                className="inline-flex items-center gap-1.5 text-sm font-semibold text-brand-600 hover:text-brand-700"
+              >
+                Lihat semua
+                <ArrowRight className="size-4" />
+              </Link>
+            </div>
+            <div className="mt-8 grid grid-cols-2 gap-4 lg:grid-cols-4">
+              {feed.map((r) => (
+                <PublicReportCard key={`${r.type}-${r.id}`} report={r} />
+              ))}
+            </div>
+          </div>
+        </section>
+      )}
+
       {/* ============ CARA KERJA ============ */}
-      <section id="cara-kerja" className="mx-auto max-w-6xl scroll-mt-24 px-4 py-20 sm:px-6 sm:py-28">
+      <section
+        id="cara-kerja"
+        className="mx-auto max-w-6xl scroll-mt-24 px-4 py-20 sm:px-6 sm:py-28"
+      >
         <div className="flex flex-wrap items-end justify-between gap-6">
           <div>
             <p className="text-sm font-semibold text-brand-600">
@@ -634,7 +682,10 @@ export default async function LandingPage() {
             <div className="flex flex-col items-center justify-between gap-4 sm:flex-row">
               <Logo dark markClassName="size-7" textClassName="text-base" />
               <div className="flex items-center gap-6 text-xs font-medium text-slate-500">
-                <a href="#cara-kerja" className="transition hover:text-slate-300">
+                <a
+                  href="#cara-kerja"
+                  className="transition hover:text-slate-300"
+                >
                   Cara Kerja
                 </a>
                 <a href="#fitur" className="transition hover:text-slate-300">

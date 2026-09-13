@@ -1,6 +1,7 @@
 "use client";
 
 import { useActionState, useEffect, useRef, useState } from "react";
+import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { Camera, LocateFixed, ShieldAlert, Sparkles, X } from "lucide-react";
 import {
@@ -24,10 +25,15 @@ type ReportAction = (
 export function ReportForm({
   type,
   action,
+  isAuthenticated = true,
+  loginHref = "/login",
 }: {
   type: "LOST" | "FOUND";
   action: ReportAction;
+  isAuthenticated?: boolean;
+  loginHref?: string;
 }) {
+  const router = useRouter();
   const [state, formAction, pending] = useActionState(action, null);
   const [preview, setPreview] = useState<string | null>(null);
   const [coords, setCoords] = useState<{ lat: number; lng: number } | null>(
@@ -35,6 +41,51 @@ export function ReportForm({
   );
   const [locating, setLocating] = useState(false);
   const fileRef = useRef<HTMLInputElement>(null);
+  const formRef = useRef<HTMLFormElement>(null);
+  const draftKey = `temuin_draft_${type}`;
+
+  // Pulihkan draft yang disimpan saat pengguna diminta login sebelum submit.
+  useEffect(() => {
+    if (!isAuthenticated) return;
+    try {
+      const raw = sessionStorage.getItem(draftKey);
+      if (!raw) return;
+      const draft = JSON.parse(raw) as Record<string, string>;
+      const form = formRef.current;
+      if (form) {
+        for (const [name, value] of Object.entries(draft)) {
+          const el = form.elements.namedItem(name);
+          if (
+            el instanceof HTMLInputElement ||
+            el instanceof HTMLTextAreaElement ||
+            el instanceof HTMLSelectElement
+          ) {
+            el.value = value;
+          }
+        }
+      }
+      sessionStorage.removeItem(draftKey);
+      toast.success("Isian laporanmu sebelumnya dipulihkan.");
+    } catch {
+      // draft korup — abaikan
+    }
+  }, [isAuthenticated, draftKey]);
+
+  function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
+    if (isAuthenticated) return; // biarkan server action berjalan normal
+    e.preventDefault();
+    const draft: Record<string, string> = {};
+    for (const [k, v] of new FormData(e.currentTarget).entries()) {
+      if (k !== "image" && typeof v === "string") draft[k] = v;
+    }
+    try {
+      sessionStorage.setItem(draftKey, JSON.stringify(draft));
+    } catch {
+      // storage penuh/diblokir — lanjut saja ke login
+    }
+    toast.info("Masuk dulu untuk mengirim. Isianmu disimpan sementara.");
+    router.push(loginHref);
+  }
 
   const isLost = type === "LOST";
   const err = state?.fieldErrors ?? {};
@@ -86,7 +137,12 @@ export function ReportForm({
   }
 
   return (
-    <form action={formAction} className="space-y-5">
+    <form
+      ref={formRef}
+      action={formAction}
+      onSubmit={handleSubmit}
+      className="space-y-5"
+    >
       <Card className="p-5 sm:p-6">
         <h2 className="mb-4 text-sm font-bold tracking-wide text-slate-900 uppercase">
           Informasi Barang
