@@ -1,0 +1,14 @@
+# Build & dependencies
+node_modules
+.next
+out
+build
+
+# Env & secrets
+.env*
+
+# Lockfile (biar tak diformat ulang)
+package-lock.json
+
+# Generated
+next-env.d.ts
