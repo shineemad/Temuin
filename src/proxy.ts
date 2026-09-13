@@ -5,17 +5,30 @@ const PROTECTED_PREFIXES = [
   "/saya",
   "/klaim",
   "/pos",
-  "/dashboard",
-  "/report",
   "/reports",
   "/matches",
-  "/claims",
   "/notifications",
-  "/impact",
   "/profile",
-  "/messages",
-  "/admin",
 ];
+
+// Rute lama → struktur baru. Prefix (mis. /claims/x → /klaim/x) ditangani terpisah.
+const LEGACY_EXACT: Record<string, string> = {
+  "/dashboard": "/saya",
+  "/reports": "/saya",
+  "/matches": "/saya",
+  "/impact": "/saya",
+  "/admin": "/pos",
+  "/report": "/lapor/hilang",
+  "/report/lost": "/lapor/hilang",
+  "/report/found": "/lapor/temuan",
+};
+
+function legacyRedirect(path: string): string | null {
+  if (LEGACY_EXACT[path]) return LEGACY_EXACT[path];
+  if (path === "/claims") return "/klaim";
+  if (path.startsWith("/claims/")) return path.replace("/claims/", "/klaim/");
+  return null;
+}
 
 export async function proxy(request: NextRequest) {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
@@ -50,6 +63,16 @@ export async function proxy(request: NextRequest) {
   } = await supabase.auth.getUser();
 
   const path = request.nextUrl.pathname;
+
+  // Rute lama diarahkan ke struktur baru (berlaku untuk semua pengunjung).
+  const legacy = legacyRedirect(path);
+  if (legacy) {
+    const dest = request.nextUrl.clone();
+    dest.pathname = legacy;
+    dest.search = "";
+    return NextResponse.redirect(dest);
+  }
+
   const isProtected = PROTECTED_PREFIXES.some(
     (p) => path === p || path.startsWith(`${p}/`),
   );
@@ -60,20 +83,6 @@ export async function proxy(request: NextRequest) {
     loginUrl.search = "";
     loginUrl.searchParams.set("next", path);
     return NextResponse.redirect(loginUrl);
-  }
-
-  // Rute lama diarahkan ke struktur baru.
-  if (user && (path === "/dashboard" || path === "/reports")) {
-    const dest = request.nextUrl.clone();
-    dest.pathname = "/saya";
-    dest.search = "";
-    return NextResponse.redirect(dest);
-  }
-  if (user && path === "/claims") {
-    const dest = request.nextUrl.clone();
-    dest.pathname = "/klaim";
-    dest.search = "";
-    return NextResponse.redirect(dest);
   }
 
   if (user && (path === "/login" || path === "/register")) {

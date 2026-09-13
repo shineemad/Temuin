@@ -67,7 +67,7 @@ export async function submitClaimAction(
     .eq("match_id", matchId)
     .eq("claimant_id", user.id)
     .maybeSingle();
-  if (existing) redirect(`/claims/${existing.id}`);
+  if (existing) redirect(`/klaim/${existing.id}`);
 
   const { data: inserted, error } = await db
     .from("claims")
@@ -86,13 +86,13 @@ export async function submitClaimAction(
       ctx.found.user_id,
       "CLAIM_SUBMITTED",
       "Klaim baru masuk",
-      `Seseorang mengklaim sebagai pemilik "${ctx.found.item_name}" yang Anda temukan. Sistem sedang memverifikasi.`,
-      `/claims/${inserted.id}`,
+      `Seseorang mengklaim sebagai pemilik "${ctx.found.item_name}" yang Anda temukan. Operator akan memverifikasi.`,
+      `/klaim/${inserted.id}`,
     ),
   ]);
 
-  revalidatePath("/claims");
-  redirect(`/claims/${inserted.id}`);
+  revalidatePath("/klaim");
+  redirect(`/klaim/${inserted.id}`);
 }
 
 /** Claimant menjawab pertanyaan verifikasi kepemilikan. */
@@ -187,14 +187,17 @@ export async function submitVerificationAction(
     notify(
       ctx.found.user_id,
       "CLAIM_VERIFIED",
-      "Hasil verifikasi klaim siap ditinjau",
-      `Verification score ${Math.round(evaluation.score)}% untuk klaim "${ctx.found.item_name}". Tinjau dan putuskan.`,
-      `/claims/${claimId}`,
+      "Klaim atas barang temuanmu sedang ditinjau",
+      `Ada klaim atas "${ctx.found.item_name}". Operator pos yang akan meninjau bukti kepemilikan dan memutuskan.`,
+      `/klaim/${claimId}`,
     ),
   ]);
 
-  revalidatePath(`/claims/${claimId}`);
-  return { ok: true, message: "Jawaban terkirim. Menunggu keputusan penemu." };
+  revalidatePath(`/klaim/${claimId}`);
+  return {
+    ok: true,
+    message: "Jawaban terkirim. Menunggu keputusan operator.",
+  };
 }
 
 /** Penemu menyetujui / menolak klaim setelah melihat hasil verifikasi. */

@@ -213,9 +213,10 @@ export default async function MatchDetailPage({
             Explainable Match Score
           </h2>
           <p className="mb-3 text-xs text-slate-400">
-            Mengapa sistem menganggap ini cocok? Skor akhir dihitung dari komponen berikut. Bobot dinormalisasi
-            otomatis bila ada data yang tidak tersedia (mis. tanpa foto) —
-            pengguna tanpa foto tidak dihukum.
+            Mengapa sistem menganggap ini cocok? Skor akhir dihitung dari
+            komponen berikut. Bobot dinormalisasi otomatis bila ada data yang
+            tidak tersedia (mis. tanpa foto) — pengguna tanpa foto tidak
+            dihukum.
           </p>
           <ScoreBreakdown components={match.explanation} />
         </Card>
@@ -234,7 +235,7 @@ export default async function MatchDetailPage({
                   <p className="text-sm text-slate-600">
                     Anda sudah mengajukan klaim untuk match ini.
                   </p>
-                  <ButtonLink href={`/claims/${myClaim.id}`} className="w-full">
+                  <ButtonLink href={`/klaim/${myClaim.id}`} className="w-full">
                     Lihat Klaim Saya
                   </ButtonLink>
                 </div>
@@ -262,7 +263,7 @@ export default async function MatchDetailPage({
                   untuk barang temuan Anda.
                 </p>
                 <ButtonLink
-                  href={`/claims/${activeClaim.id}`}
+                  href={`/klaim/${activeClaim.id}`}
                   className="w-full"
                 >
                   Lihat Klaim
