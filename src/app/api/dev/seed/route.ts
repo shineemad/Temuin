@@ -2,6 +2,8 @@
 // Laporan dibuat lewat PIPELINE ASLI (insert → AI analysis → matching engine)
 // sehingga match score dihasilkan proses sesungguhnya, bukan hard-code.
 //
+// HANYA AKTIF saat NODE_ENV=development. Di produksi endpoint ini balas 404.
+//
 // Cara pakai (dev):  buka http://localhost:3000/api/dev/seed?secret=<SEED_SECRET>
 // atau:              curl -X POST http://localhost:3000/api/dev/seed -H "x-seed-secret: <SEED_SECRET>"
 
@@ -58,15 +60,18 @@ export async function GET(request: NextRequest) {
 }
 
 async function handleSeed(request: NextRequest) {
+  // Seed menghapus lalu menulis ulang data demo memakai service role, jadi di
+  // luar development endpoint ini dimatikan total — 404 agar keberadaannya
+  // tidak bisa dideteksi.
+  if (process.env.NODE_ENV !== "development") {
+    return NextResponse.json({ error: "Not found" }, { status: 404 });
+  }
+
   const secret = process.env.SEED_SECRET;
   const provided =
     request.headers.get("x-seed-secret") ??
     request.nextUrl.searchParams.get("secret");
-  const isDev = process.env.NODE_ENV === "development";
-  if (!isDev && (!secret || provided !== secret)) {
-    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
-  }
-  if (isDev && secret && provided !== secret) {
+  if (secret && provided !== secret) {
     return NextResponse.json(
       { error: "Sertakan ?secret=<SEED_SECRET> sesuai .env.local" },
       { status: 403 },
