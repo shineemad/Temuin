@@ -24,7 +24,9 @@ import {
 import { translateTokens } from "@/lib/ai/fallback";
 
 /** Bobot dasar. Komponen yang datanya tidak tersedia dikeluarkan dan
- *  bobot sisanya dinormalisasi ulang agar total tetap 100%. */
+ *  bobot sisanya dinormalisasi ulang agar total tetap 100%.
+ *  Catatan: `image` sengaja dihilangkan — analisis foto tidak dipakai sebagai
+ *  sinyal matching di MVP (operator memeriksa barang fisik langsung). */
 const BASE_WEIGHTS = {
   semantic: 30,
   attributes: 20,
@@ -32,7 +34,6 @@ const BASE_WEIGHTS = {
   location: 20,
   time: 15,
   category: 5,
-  image: 15,
 } as const;
 
 export interface MatchingResult {
@@ -366,57 +367,6 @@ function scoreTime(lost: Side, found: Side): MatchComponent {
   };
 }
 
-function scoreImage(lost: Side, found: Side): MatchComponent {
-  if (!lost.image || !found.image) {
-    return {
-      key: "image",
-      label: "Foto",
-      weight: 0,
-      score: null,
-      detail:
-        lost.image || found.image
-          ? "Foto hanya tersedia di satu laporan"
-          : "Foto tidak tersedia",
-      available: false,
-    };
-  }
-  const parts: Array<{ w: number; s: number }> = [];
-  const push = (a: string | null, b: string | null, w: number) => {
-    if (a && b)
-      parts.push({ w, s: compareValues(a.toLowerCase(), b.toLowerCase()) });
-  };
-  push(lost.image.object, found.image.object, 0.3);
-  push(lost.image.color, found.image.color, 0.25);
-  push(lost.image.brand, found.image.brand, 0.1);
-  const featSimA = lost.image.distinctive_features.join(", ");
-  const featSimB = found.image.distinctive_features.join(", ");
-  if (featSimA && featSimB)
-    parts.push({ w: 0.35, s: textSimilarity(featSimA, featSimB) });
-  if (parts.length === 0) {
-    return {
-      key: "image",
-      label: "Foto",
-      weight: 0,
-      score: null,
-      detail: "Analisis foto tidak menghasilkan atribut yang bisa dibandingkan",
-      available: false,
-    };
-  }
-  const totalW = parts.reduce((s, p) => s + p.w, 0);
-  const score = clamp01(parts.reduce((s, p) => s + p.s * p.w, 0) / totalW);
-  return {
-    key: "image",
-    label: "Foto",
-    weight: 0,
-    score,
-    detail:
-      score >= 0.6
-        ? "Objek pada kedua foto tampak serupa"
-        : "Objek pada foto kurang serupa",
-    available: true,
-  };
-}
-
 // ---------- skor akhir ----------
 
 export function computeMatch(
@@ -435,7 +385,6 @@ export function computeMatch(
     scoreLocation(lost, found),
     scoreTime(lost, found),
     scoreCategory(lost, found),
-    scoreImage(lost, found),
   ];
 
   const availableWeight = components.reduce(
@@ -476,7 +425,7 @@ export function computeMatch(
       unique_feature_score: get("unique"),
       location_score: get("location"),
       time_score: get("time"),
-      image_score: get("image"),
+      image_score: null,
     },
   };
 }
