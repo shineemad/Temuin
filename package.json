@@ -12,6 +12,7 @@
     "test:watch": "vitest",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
+    "check:supabase": "node scripts/check-supabase.mjs",
     "prepare": "husky"
   },
   "lint-staged": {
