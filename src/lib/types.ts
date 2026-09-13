@@ -23,6 +23,21 @@ export type MatchLevel = "LOW" | "POSSIBLE" | "GOOD" | "HIGH";
 
 export type AiStatus = "PENDING" | "COMPLETED" | "PARTIAL" | "FAILED";
 
+/** Di mana barang temuan berada. POS = di pos serah terima; FINDER = dipegang penemu (fase 2). */
+export type Holding = "POS" | "FINDER";
+
+export type CustodyStatus = "AWAITING" | "IN_CUSTODY" | "RELEASED";
+
+/** Titik serah terima tempat barang temuan dititipkan & diambil. */
+export interface Pos {
+  id: string;
+  name: string;
+  area: string | null;
+  description: string | null;
+  is_active: boolean;
+  created_at: string;
+}
+
 export interface Profile {
   id: string;
   full_name: string;
@@ -63,6 +78,13 @@ export interface FoundReport extends ReportBase {
   private_verification_info: string;
   found_date: string;
   found_time: string | null;
+  /** Custody — jalur pos serah terima. */
+  holding: Holding;
+  pos_id: string | null;
+  custody_status: CustodyStatus;
+  received_by: string | null;
+  received_at: string | null;
+  released_at: string | null;
 }
 
 /** Structured attributes hasil AI information extraction (canonical english lowercase). */
@@ -140,6 +162,10 @@ export interface Claim {
   status: ClaimStatus;
   verification_score: number | null;
   finder_note: string | null;
+  /** Keputusan operator atas klaim (custody model). */
+  reviewed_by: string | null;
+  reviewed_at: string | null;
+  operator_note: string | null;
   created_at: string;
   updated_at: string;
 }
