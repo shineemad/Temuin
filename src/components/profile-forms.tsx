@@ -82,6 +82,20 @@ export function PasswordForm() {
   return (
     <form action={formAction} className="space-y-4">
       <div>
+        <Label htmlFor="current_password">Password saat ini</Label>
+        <Input
+          id="current_password"
+          name="current_password"
+          type="password"
+          autoComplete="current-password"
+          required
+        />
+        <Help>
+          Dibutuhkan untuk memastikan hanya kamu yang bisa mengganti password.
+        </Help>
+        <FieldError error={state?.fieldErrors?.current_password} />
+      </div>
+      <div>
         <Label htmlFor="new_password">Password baru</Label>
         <Input
           id="new_password"
