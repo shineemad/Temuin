@@ -2,6 +2,9 @@ import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
 
 const PROTECTED_PREFIXES = [
+  "/saya",
+  "/klaim",
+  "/pos",
   "/dashboard",
   "/report",
   "/reports",
@@ -59,9 +62,23 @@ export async function proxy(request: NextRequest) {
     return NextResponse.redirect(loginUrl);
   }
 
+  // Rute lama diarahkan ke struktur baru.
+  if (user && (path === "/dashboard" || path === "/reports")) {
+    const dest = request.nextUrl.clone();
+    dest.pathname = "/saya";
+    dest.search = "";
+    return NextResponse.redirect(dest);
+  }
+  if (user && path === "/claims") {
+    const dest = request.nextUrl.clone();
+    dest.pathname = "/klaim";
+    dest.search = "";
+    return NextResponse.redirect(dest);
+  }
+
   if (user && (path === "/login" || path === "/register")) {
     const dashUrl = request.nextUrl.clone();
-    dashUrl.pathname = "/dashboard";
+    dashUrl.pathname = "/saya";
     dashUrl.search = "";
     return NextResponse.redirect(dashUrl);
   }

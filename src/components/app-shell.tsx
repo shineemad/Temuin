@@ -7,13 +7,11 @@ import {
   Bell,
   FileSearch,
   HandHeart,
-  LayoutDashboard,
+  Inbox,
   LogOut,
   Menu,
   PackageSearch,
   ShieldCheck,
-  Sparkles,
-  TrendingUp,
   UserRound,
   X,
 } from "lucide-react";
@@ -47,20 +45,17 @@ export function AppShell({
   const closeMobile = () => setMobileOpen(false);
 
   const nav: NavItem[] = [
-    { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
-    { href: "/reports", label: "Laporan Saya", icon: FileSearch },
-    { href: "/matches", label: "Matches", icon: Sparkles },
-    { href: "/claims", label: "Klaim", icon: ShieldCheck },
+    { href: "/saya", label: "Laporan Saya", icon: FileSearch },
+    { href: "/klaim", label: "Klaim", icon: ShieldCheck },
     {
       href: "/notifications",
       label: "Notifikasi",
       icon: Bell,
       badge: unreadCount,
     },
-    { href: "/impact", label: "Impact", icon: TrendingUp },
     { href: "/profile", label: "Profil", icon: UserRound },
   ];
-  if (isAdmin) nav.push({ href: "/admin", label: "Admin", icon: ShieldCheck });
+  if (isAdmin) nav.push({ href: "/pos", label: "Konsol Pos", icon: Inbox });
 
   const isActive = (href: string) =>
     pathname === href || pathname.startsWith(`${href}/`);
@@ -68,14 +63,14 @@ export function AppShell({
   const sidebarContent = (
     <>
       <div className="flex h-16 items-center px-5">
-        <Link href="/dashboard">
+        <Link href="/saya">
           <Logo />
         </Link>
       </div>
 
       <div className="space-y-2 px-4 pb-4">
         <Link
-          href="/report/lost"
+          href="/lapor/hilang"
           onClick={closeMobile}
           className="flex items-center gap-2.5 rounded-xl bg-brand-600 px-3.5 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-brand-700"
         >
@@ -83,7 +78,7 @@ export function AppShell({
           Saya Kehilangan Barang
         </Link>
         <Link
-          href="/report/found"
+          href="/lapor/temuan"
           onClick={closeMobile}
           className="flex items-center gap-2.5 rounded-xl bg-amber-400 px-3.5 py-2.5 text-sm font-semibold text-amber-950 shadow-sm transition hover:bg-amber-300"
         >
@@ -185,7 +180,7 @@ export function AppShell({
           >
             <Menu className="size-5" />
           </button>
-          <Link href="/dashboard" className="flex items-center gap-2">
+          <Link href="/saya" className="flex items-center gap-2">
             <LogoMark className="size-7" />
             <span className="text-base font-extrabold tracking-tight text-slate-900">
               temuin<span className="text-amber-400">.</span>
@@ -215,10 +210,10 @@ export function AppShell({
         >
           <div className="mx-auto grid h-16 max-w-md grid-cols-5">
             {[
-              { href: "/dashboard", label: "Home", icon: LayoutDashboard },
-              { href: "/reports", label: "Laporan", icon: FileSearch },
-              { href: "/matches", label: "Matches", icon: Sparkles },
-              { href: "/claims", label: "Klaim", icon: ShieldCheck },
+              { href: "/saya", label: "Laporan", icon: FileSearch },
+              { href: "/klaim", label: "Klaim", icon: ShieldCheck },
+              { href: "/lapor/hilang", label: "Lapor", icon: PackageSearch },
+              { href: "/notifications", label: "Notif", icon: Bell },
               { href: "/profile", label: "Profil", icon: UserRound },
             ].map((item) => (
               <Link

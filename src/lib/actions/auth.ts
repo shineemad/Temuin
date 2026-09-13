@@ -14,8 +14,8 @@ async function clientIp(): Promise<string> {
 }
 
 function safeNext(raw: unknown): string {
-  if (typeof raw !== "string") return "/dashboard";
-  if (!raw.startsWith("/") || raw.startsWith("//")) return "/dashboard";
+  if (typeof raw !== "string") return "/saya";
+  if (!raw.startsWith("/") || raw.startsWith("//")) return "/saya";
   return raw;
 }
 
@@ -88,7 +88,7 @@ export async function registerAction(
     };
   }
 
-  redirect("/dashboard");
+  redirect("/saya");
 }
 
 export async function loginAction(
